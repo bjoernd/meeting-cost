@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 from io import StringIO
 import time
 import pandas as pd
+import sys
 
 SDE_URL="https://www.levels.fyi/companies/amazon/salaries/software-engineer?country=254"
 SDM_URL="https://www.levels.fyi/companies/amazon/salaries/software-engineering-manager?country=254"
@@ -69,8 +70,21 @@ if __name__ == "__main__":
     print("Getting salary data...")
     for title, short, url in [ ("Software Engineering Managers", "SDM", SDM_URL),
                         ("Software Developers", "SDE", SDE_URL)]:
-        print(f"  ... {short} ...")
         df = extract_salaries(url)
         salaries[short] = create_salary_dict(df)
 
-    print("Got salary data.")
+    hourly_cost = 0
+
+    # Treat all cmd line args as attendees of the format <short>-<level>
+    for attendee in sys.argv[1:]:
+        job, level = attendee.split('-')
+
+        try:
+            hourly = salaries[job][level]
+            hourly_cost += hourly
+        except KeyError as ke:
+            print(f"Skipping unknown attendee type {attendee}")
+
+    print("Meeting cost:")
+    for length in [0.5, 0.75, 1, 1.5, 2]:
+        print(f"  - {int(length * 60):3d} min: {hourly_cost * length: 9.2f} €")
