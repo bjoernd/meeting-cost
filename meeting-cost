@@ -1,5 +1,19 @@
 #!/usr/bin/python3
 
+# Meeting cost calculator
+#
+# Use salary data from levels.fyi to compute the cost of a meeting
+# based on its attendees.
+
+# TODO:
+#  - caching of salary data
+#  - use logging
+#  - support other countries than USA
+#  - support other companies than Amazon
+#  - support other job roles than SDM and SDE
+#  - support other currencies
+#  - support other meeting lengths
+
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
