@@ -1,6 +1,10 @@
 # meeting-cost
 Demo tool to calculate the cost of a meeting based on online salary data
 
+The tool downloads current salary data from levels.fyi (currently: Amazon, USA)
+and then computes the cost of a given meeting based on the hourly salaries of
+the attendees.
+
 ## Usage
 
 ```
