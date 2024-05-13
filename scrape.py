@@ -14,6 +14,7 @@ import pandas as pd
 SDE_URL="https://www.levels.fyi/companies/amazon/salaries/software-engineer?country=254"
 SDM_URL="https://www.levels.fyi/companies/amazon/salaries/software-engineering-manager?country=254"
 
+
 def extract_salaries(url):
     # Set up Chrome webdriver
     chrome_options = Options()
@@ -50,10 +51,30 @@ def extract_salaries(url):
 
     return tables[0]
 
+
+def create_salary_dict(df):
+    ret = {}
+
+    for key in ["L4", "L5", "L6", "L7", "L8"]:
+        data = df[df["Level Name"].str.contains(key)]
+        if not data.empty:
+            salary = data["Total"].values[0]
+            salary = salary.replace('€', '')
+            salary = salary.replace('K', '')
+            salary = int(salary, 10) * 1000
+            ret[key] = salary
+
+    return ret
+
+
 if __name__ == "__main__":
-    for title, url in [ ("Software Engineering Managers", SDM_URL),
-                        ("Software Developers", SDE_URL)]:
+    salaries = {}
+
+    print("Getting salary data...")
+    for title, short, url in [ ("Software Engineering Managers", "SDM", SDM_URL),
+                        ("Software Developers", "SDE", SDE_URL)]:
+        print(f"  ... {short} ...")
         df = extract_salaries(url)
-        print(f"========== {title} ==========")
-        print(df)
-        print()
+        salaries[short] = create_salary_dict(df)
+
+    print("Got salary data.")
