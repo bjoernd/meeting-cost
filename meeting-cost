@@ -44,12 +44,7 @@ def extract_salaries(url):
     # Quit the driver
     driver.quit()
 
-    with open("./amazon_salaries.html", "w") as f:
-        f.write(page_content)
-
-    tables = pd.read_html(StringIO(page_content))
-
-    return tables[0]
+    return pd.read_html(StringIO(page_content))[0]
 
 
 def create_salary_dict(df):
