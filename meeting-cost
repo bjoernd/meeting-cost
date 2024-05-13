@@ -62,7 +62,8 @@ def create_salary_dict(df):
             salary = salary.replace('€', '')
             salary = salary.replace('K', '')
             salary = int(salary, 10) * 1000
-            ret[key] = salary
+            # 238 work days per year, 8 hours per day
+            ret[key] = salary / 238. / 8.
 
     return ret
 
