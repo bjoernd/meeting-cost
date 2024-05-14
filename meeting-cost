@@ -28,6 +28,7 @@ import sys
 
 SDE_URL="https://www.levels.fyi/companies/amazon/salaries/software-engineer?country=254"
 SDM_URL="https://www.levels.fyi/companies/amazon/salaries/software-engineering-manager?country=254"
+TPM_URL="https://www.levels.fyi/companies/amazon/salaries/technical-program-manager?country=254"
 
 
 def extract_salaries(url):
@@ -82,7 +83,7 @@ def usage():
     print(f"{sys.argv[0]} ATTENDEE [ATTENDEE ...]")
     print()
     print("Compute meeting cost based on attendees. Attendee format is <role>-<level>.")
-    print("Supported roles: SDM SDE")
+    print("Supported roles: SDM SDE TPM")
     print("Supported levels: L4 L5 L6 L7 L8")
     print()
     print("Example usage:")
@@ -106,7 +107,8 @@ if __name__ == "__main__":
 
     print("Getting salary data...")
     for title, short, url in [ ("Software Engineering Managers", "SDM", SDM_URL),
-                        ("Software Developers", "SDE", SDE_URL)]:
+                        ("Software Developers", "SDE", SDE_URL),
+                        ("Technical Program Managers", "TPM", TPM_URL)]:
         df = extract_salaries(url)
         salaries[short] = create_salary_dict(df)
 
