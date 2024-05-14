@@ -70,6 +70,8 @@ def create_salary_dict(df):
         data = df[df["Level Name"].str.contains(key)]
         if not data.empty:
             salary = data["Total"].values[0]
+            # skip unknown salary data
+            if '--' in salary: continue
             salary = salary.replace('€', '')
             salary = salary.replace('K', '')
             salary = int(salary, 10) * 1000
