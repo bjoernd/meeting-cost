@@ -45,13 +45,14 @@ def extract_salaries(url):
 
     # Wait for the content to load
     wait = WebDriverWait(driver, 10)
-    div_element = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".MuiTableContainer-root.job-family_tableContainer__MOxEY.css-kge0eu")))
+    wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".MuiTableContainer-root.job-family_tableContainer__MOxEY.css-kge0eu")))
 
     # Find the link to Click
     link_to_click = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ".MuiButton-root.MuiButton-text.MuiButton-textNeutral.MuiButton-sizeLarge.MuiButton-textSizeLarge.MuiButtonBase-root.css-y5b368")))
     # Click the link
     link_to_click.click()
-    time.sleep(3)
+
+    wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".MuiTableCell-root.MuiTableCell-body.MuiTableCell-alignLeft.MuiTableCell-sizeMedium.css-k1mugk")))
 
     # Get the page content
     page_content = driver.page_source.replace('\n', ' ')
