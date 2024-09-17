@@ -48,7 +48,7 @@ def extract_salaries(url):
     div_element = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".MuiTableContainer-root.job-family_tableContainer__MOxEY.css-kge0eu")))
 
     # Find the link to Click
-    link_to_click = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ".MuiButton-root.MuiButton-text.MuiButton-textNeutral.MuiButton-sizeLarge.MuiButton-textSizeLarge.MuiButtonBase-root.css-1t9hmlk")))
+    link_to_click = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ".MuiButton-root.MuiButton-text.MuiButton-textNeutral.MuiButton-sizeLarge.MuiButton-textSizeLarge.MuiButtonBase-root.css-y5b368")))
     # Click the link
     link_to_click.click()
     time.sleep(3)
