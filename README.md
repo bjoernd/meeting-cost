@@ -42,3 +42,7 @@ development tool to locate the respective elements and adjust their names.
 ### Loading takes long
 
 Yes, we should perform some caching between runs.
+
+### I'm not working for Amazon
+
+Yup, we should support arbitrary companies with their job roles and levels.
