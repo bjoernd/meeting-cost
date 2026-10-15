@@ -99,8 +99,8 @@ def create_salary_dict(df):
             # skip unknown salary data
             if '--' in salary: continue
             salary = salary.replace('€', '')
-            salary = salary.replace('K', '')
-            salary = int(salary, 10) * 1000
+            multiplier = {'K': 1000, 'M': 1000000}[salary[-1]]
+            salary = round(float(salary[:-1]) * multiplier)
             # 238 work days per year, 8 hours per day
             ret[key] = salary / 238. / 8.
 
