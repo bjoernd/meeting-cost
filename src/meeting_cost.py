@@ -10,101 +10,57 @@
 #  - use logging
 #  - support other countries than USA
 #  - support other companies than Amazon
-#  - support other job roles than SDM and SDE
+#  - support other job roles than SDM, SDE and TPM
 #  - support other currencies
 #  - support other meeting lengths
 
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from io import StringIO
-import os
-import shutil
-import time
-import pandas as pd
+import json
+import re
 import sys
+import urllib.request
 
 SDE_URL="https://www.levels.fyi/companies/amazon/salaries/software-engineer?country=254"
 SDM_URL="https://www.levels.fyi/companies/amazon/salaries/software-engineering-manager?country=254"
 TPM_URL="https://www.levels.fyi/companies/amazon/salaries/technical-program-manager?country=254"
 
-# Common ChromeDriver install locations (Linux distros, Homebrew, snap)
-CHROMEDRIVER_LOCATIONS = [
-    "/usr/bin/chromedriver",
-    "/usr/local/bin/chromedriver",
-    "/opt/homebrew/bin/chromedriver",
-    "/usr/lib/chromium/chromedriver",
-    "/usr/lib/chromium-browser/chromedriver",
-    "/snap/bin/chromium.chromedriver",
-]
+# levels.fyi serves an empty page to clients that do not look like a browser
+USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36"
+
+LEVELS = ["L4", "L5", "L6", "L7", "L8"]
+WORK_DAYS_PER_YEAR = 238
+HOURS_PER_DAY = 8
 
 
-def find_chromedriver(locations=CHROMEDRIVER_LOCATIONS):
-    """Return the ChromeDriver path from PATH or a well-known location, or None."""
-    on_path = shutil.which("chromedriver")
-    if on_path:
-        return on_path
-
-    for location in locations:
-        if os.path.isfile(location) and os.access(location, os.X_OK):
-            return location
-
-    return None
+class SalaryDataNotFound(Exception):
+    """The levels.fyi page did not contain salary data in the expected form."""
 
 
-def extract_salaries(url):
-    # Set up Chrome webdriver
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")  # To run Chrome in headless mode
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-gpu")
-    # Without a known path, Selenium Manager locates or downloads a driver
-    service = Service(find_chromedriver())
-    driver = webdriver.Chrome(service=service, options=chrome_options)
-
-    # Load the webpage
-    driver.get(url)
-
-    # Wait for the content to load
-    wait = WebDriverWait(driver, 10)
-    wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".MuiTableContainer-root.job-family-module-scss-module__6qB4Ca__tableContainer.mui-kge0eu")))
-
-    # Find the link to Click
-    link_to_click = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, ".MuiButton-root.MuiButton-text.MuiButton-textNeutral.MuiButton-sizeLarge.MuiButton-textSizeLarge.MuiButtonBase-root.mui-y5b368")))
-    # Click the link
-    link_to_click.click()
-
-    wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".MuiTableCell-root.MuiTableCell-body.MuiTableCell-alignLeft.MuiTableCell-sizeMedium.mui-k1mugk")))
-
-    # Get the page content
-    page_content = driver.page_source.replace('\n', ' ')
-
-    # Quit the driver
-    driver.quit()
-
-    return pd.read_html(StringIO(page_content))[0]
+def fetch_page(url):
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    with urllib.request.urlopen(request, timeout=30) as response:
+        return response.read().decode()
 
 
-def create_salary_dict(df):
-    ret = {}
+def hourly_rates(page):
+    """Map each supported level to an hourly rate in USD, using the salary
+    data levels.fyi embeds in its pages for Next.js."""
+    match = re.search(r'<script id="__NEXT_DATA__"[^>]*>(.*?)</script>', page, re.S)
+    if not match:
+        raise SalaryDataNotFound("no embedded page data")
 
-    for key in ["L4", "L5", "L6", "L7", "L8"]:
-        data = df[df["Level Name"].str.contains(key)]
-        if not data.empty:
-            salary = data["Total"].values[0]
-            # skip unknown salary data
-            if '--' in salary: continue
-            salary = salary.replace('€', '')
-            multiplier = {'K': 1000, 'M': 1000000}[salary[-1]]
-            salary = round(float(salary[:-1]) * multiplier)
-            # 238 work days per year, 8 hours per day
-            ret[key] = salary / 238. / 8.
+    try:
+        props = json.loads(match.group(1))["props"]["pageProps"]
+        currency = props["locationCurrency"]
+        totals = {average["shortestLevelName"].split()[0]: average["rawValues"]["total"]
+                  for average in props["averages"]}
+    except (KeyError, ValueError) as error:
+        raise SalaryDataNotFound(f"unexpected page data layout: {error!r}") from error
 
-    return ret
+    if currency != "USD":
+        raise SalaryDataNotFound(f"expected USD, got {currency}")
+
+    return {level: total / WORK_DAYS_PER_YEAR / HOURS_PER_DAY
+            for level, total in totals.items() if level in LEVELS}
 
 
 def usage():
@@ -137,8 +93,7 @@ def main():
     for title, short, url in [ ("Software Engineering Managers", "SDM", SDM_URL),
                         ("Software Developers", "SDE", SDE_URL),
                         ("Technical Program Managers", "TPM", TPM_URL)]:
-        df = extract_salaries(url)
-        salaries[short] = create_salary_dict(df)
+        salaries[short] = hourly_rates(fetch_page(url))
 
     hourly_cost = 0
 
@@ -154,7 +109,7 @@ def main():
 
     print("Meeting cost:")
     for length in [0.5, 0.75, 1, 1.5, 2]:
-        print(f"  - {int(length * 60):3d} min: {hourly_cost * length: 9.2f} €")
+        print(f"  - {int(length * 60):3d} min: {hourly_cost * length: 9.2f} USD")
 
 
 if __name__ == "__main__":
