@@ -42,7 +42,7 @@ def fetch_page(url):
 def hourly_rates(page):
     """Map each supported level to an hourly rate in USD, using the salary
     data levels.fyi embeds in its pages for Next.js."""
-    match = re.search(r'<script id="__NEXT_DATA__"[^>]*>(.*?)</script>', page, re.S)
+    match = re.search(r'<script id="__NEXT_DATA__"[^>]*>(.*?)</script>', page, re.DOTALL)
     if not match:
         raise SalaryDataNotFound("no embedded page data")
 
