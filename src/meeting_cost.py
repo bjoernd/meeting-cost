@@ -126,7 +126,7 @@ def usage():
     """)
 
 
-if __name__ == "__main__":
+def main():
     salaries = {}
 
     if len(sys.argv) < 2:
@@ -155,3 +155,7 @@ if __name__ == "__main__":
     print("Meeting cost:")
     for length in [0.5, 0.75, 1, 1.5, 2]:
         print(f"  - {int(length * 60):3d} min: {hourly_cost * length: 9.2f} €")
+
+
+if __name__ == "__main__":
+    main()

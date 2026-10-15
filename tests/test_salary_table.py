@@ -3,7 +3,7 @@ from io import StringIO
 import pandas as pd
 import pytest
 
-from test_find_chromedriver import meeting_cost
+import meeting_cost
 
 SALARY_TABLE = """
 <table>

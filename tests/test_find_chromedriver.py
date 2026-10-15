@@ -1,21 +1,6 @@
-import importlib.machinery
-import importlib.util
-from pathlib import Path
-
 import pytest
 
-SCRIPT = Path(__file__).resolve().parent.parent / "src" / "meeting-cost"
-
-
-def load_script():
-    loader = importlib.machinery.SourceFileLoader("meeting_cost", str(SCRIPT))
-    spec = importlib.util.spec_from_loader(loader.name, loader)
-    module = importlib.util.module_from_spec(spec)
-    loader.exec_module(module)
-    return module
-
-
-meeting_cost = load_script()
+import meeting_cost
 
 
 def make_driver(directory, executable=True):
