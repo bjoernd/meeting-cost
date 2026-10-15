@@ -15,8 +15,6 @@ poetry run pytest                                # run tests
 poetry run pytest tests/test_find_chromedriver.py::test_returns_none_when_not_found  # single test
 ```
 
-The locked numpy (2.1.1) has no Python 3.14 wheels; use a 3.12/3.13 venv (`poetry env use python3.13`).
-
 Running requires Chrome and network access to levels.fyi. `find_chromedriver` looks for ChromeDriver on `PATH`, then in `CHROMEDRIVER_LOCATIONS`; if neither has it, Selenium Manager locates or downloads one. No linter or formatter is configured.
 
 Because the script has a hyphen and no `.py` extension, tests import it with `importlib.machinery.SourceFileLoader` (see `tests/test_find_chromedriver.py`).
