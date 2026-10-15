@@ -25,9 +25,6 @@ SDM_URL="https://www.levels.fyi/companies/amazon/salaries/software-engineering-m
 TPM_URL="https://www.levels.fyi/companies/amazon/salaries/technical-program-manager?country=254"
 ROLE_URLS = {"SDM": SDM_URL, "SDE": SDE_URL, "TPM": TPM_URL}
 
-# levels.fyi serves an empty page to clients that do not look like a browser
-USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36"
-
 LEVELS = ["L4", "L5", "L6", "L7", "L8"]
 WORK_DAYS_PER_YEAR = 238
 HOURS_PER_DAY = 8
@@ -38,8 +35,7 @@ class SalaryDataNotFound(Exception):
 
 
 def fetch_page(url):
-    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-    with urllib.request.urlopen(request, timeout=30) as response:
+    with urllib.request.urlopen(url, timeout=30) as response:
         return response.read().decode()
 
 
