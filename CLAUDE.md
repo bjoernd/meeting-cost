@@ -4,32 +4,33 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-A single-file Python CLI (`src/meeting-cost`, no `.py` extension) that scrapes Amazon US salary data from levels.fyi with headless Chrome/Selenium and prints the cost of a meeting for a list of attendees given as `<ROLE>-<LEVEL>` (roles `SDM`, `SDE`, `TPM`; levels `L4`–`L8`).
+A single-module Python CLI (`src/meeting_cost.py`, installed as the `meeting-cost` command) that downloads Amazon US salary data from levels.fyi and prints the cost of a meeting for a list of attendees given as `<ROLE>-<LEVEL>` (roles `SDM`, `SDE`, `TPM`; levels `L4`–`L8`, case-insensitive). It uses only the Python standard library.
 
 ## Commands
 
 ```
-poetry install                                   # install deps (Python ^3.12)
-poetry run python src/meeting-cost SDM-L7 SDE-L5  # run
-poetry run pytest                                # run tests
-poetry run pytest tests/test_find_chromedriver.py::test_returns_none_when_not_found  # single test
+poetry install                                   # install (Python ^3.12)
+poetry run meeting-cost SDM-L7 SDE-L5            # run
+poetry run pytest                                # run offline tests
+poetry run pytest -m live                        # run tests against live levels.fyi data
+poetry run pytest tests/test_attendees.py::test_parses_role_and_level  # single test
 ```
 
-Running requires Chrome and network access to levels.fyi. `find_chromedriver` looks for ChromeDriver on `PATH`, then in `CHROMEDRIVER_LOCATIONS`; if neither has it, Selenium Manager locates or downloads one. No linter or formatter is configured.
-
-Because the script has a hyphen and no `.py` extension, tests import it with `importlib.machinery.SourceFileLoader` (see `tests/test_find_chromedriver.py`).
+Running needs network access to levels.fyi. No linter or formatter is configured. `pyproject.toml` puts `src` on the pytest path and deselects tests marked `live` by default.
 
 ## How it works
 
-1. `__main__` fetches one levels.fyi page per role (`SDM_URL`, `SDE_URL`, `TPM_URL`, all with `country=254` = USA) on every run; there is no caching.
-2. `extract_salaries` loads the page, waits for the salary table, clicks the "expand" button so all levels are listed, waits for the expanded rows, then parses the first HTML table with `pandas.read_html`.
-3. `create_salary_dict` maps each level to an hourly rate: the "Total" column (e.g. `€250K` or `€1.06M`) is parsed to an amount and divided by 238 work days × 8 hours. Rows with `--` are skipped.
-4. Attendee hourly rates are summed; unknown attendees are reported and skipped. Costs are printed for fixed lengths of 30/45/60/90/120 minutes.
+1. `main` validates all attendees with `parse_attendee` before any download (exit code 2 on bad input or no input), then fetches one levels.fyi page per role that is actually needed (`ROLE_URLS`, all with `country=254` = USA). There is no caching.
+2. `fetch_page` downloads the page with `urllib`. No browser is involved.
+3. `hourly_rates` reads the JSON levels.fyi embeds for Next.js (`<script id="__NEXT_DATA__">`): `props.pageProps.averages[]` holds one entry per level with `shortestLevelName` (e.g. `L5 SDM`, the first word is the level) and `rawValues.total` (yearly total compensation in USD). Totals are divided by `WORK_DAYS_PER_YEAR` × `HOURS_PER_DAY`. Levels outside `LEVELS` (e.g. `L10`, `VP`) are dropped.
+4. Attendee hourly rates are summed; attendees whose level has no data on levels.fyi (e.g. `SDM-L4`) are reported and skipped. Costs are printed in USD for fixed lengths of 30/45/60/90/120 minutes.
 
-## Fragility: levels.fyi selectors
+## Fragility: levels.fyi page data
 
-The scraper depends on generated CSS class names on levels.fyi (MUI classes like `mui-kge0eu` and CSS module classes like `job-family-module-scss-module__6qB4Ca__tableContainer`, whose prefix and hash both change over time). When levels.fyi changes its layout, the tool fails with a Selenium timeout. The fix is to inspect the live page in a browser and update the three CSS selectors in `extract_salaries` (example: commit `0a21317`). Dumping `driver.page_source` from a headless run and grepping it for the old hash suffixes (e.g. `kge0eu`) is a quick way to find the new names.
+The embedded JSON is undocumented. If its layout changes, or levels.fyi returns an empty page (this happens occasionally for a few minutes), `hourly_rates` raises `SalaryDataNotFound` and `main` exits with code 1 and a short message. `pytest -m live` checks the current live data. To find the new layout, download a page and look at `props.pageProps` in the `__NEXT_DATA__` script.
+
+The rendered HTML table uses generated CSS class names that change often. Do not go back to scraping it.
 
 ## Known gaps (from README / TODO header)
 
-No caching between runs, only Amazon/USA, only SDM/SDE/TPM roles, fixed currency (€) and meeting lengths.
+No caching between runs, only Amazon/USA, only SDM/SDE/TPM roles, fixed currency (USD) and meeting lengths.
