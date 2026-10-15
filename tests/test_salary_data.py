@@ -17,10 +17,12 @@ def average(level_name, total):
 
 
 def test_computes_hourly_rates_from_embedded_salary_data():
-    page = salary_page({
-        "locationCurrency": "USD",
-        "averages": [average("L4", 183319), average("L5 SDM", 309764)],
-    })
+    page = salary_page(
+        {
+            "locationCurrency": "USD",
+            "averages": [average("L4", 183319), average("L5 SDM", 309764)],
+        }
+    )
 
     assert meeting_cost.hourly_rates(page) == {
         "L4": pytest.approx(183319 / HOURS_PER_YEAR),
@@ -29,12 +31,20 @@ def test_computes_hourly_rates_from_embedded_salary_data():
 
 
 def test_ignores_unsupported_levels():
-    page = salary_page({
-        "locationCurrency": "USD",
-        "averages": [average("L8", 1218791), average("L10", 1548000), average("VP", 1893500)],
-    })
+    page = salary_page(
+        {
+            "locationCurrency": "USD",
+            "averages": [
+                average("L8", 1218791),
+                average("L10", 1548000),
+                average("VP", 1893500),
+            ],
+        }
+    )
 
-    assert meeting_cost.hourly_rates(page) == {"L8": pytest.approx(1218791 / HOURS_PER_YEAR)}
+    assert meeting_cost.hourly_rates(page) == {
+        "L8": pytest.approx(1218791 / HOURS_PER_YEAR)
+    }
 
 
 def test_rejects_page_without_embedded_data():
@@ -45,7 +55,9 @@ def test_rejects_page_without_embedded_data():
 def test_rejects_page_with_unexpected_data_layout():
     page = salary_page({"locationCurrency": "USD"})
 
-    with pytest.raises(meeting_cost.SalaryDataNotFound, match="unexpected page data layout"):
+    with pytest.raises(
+        meeting_cost.SalaryDataNotFound, match="unexpected page data layout"
+    ):
         meeting_cost.hourly_rates(page)
 
 

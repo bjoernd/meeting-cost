@@ -46,4 +46,7 @@ def test_reports_missing_salary_data(monkeypatch, capsys):
     monkeypatch.setattr(meeting_cost, "fetch_page", lambda url: "")
 
     assert run_main(monkeypatch, "SDE-L5") == 1
-    assert "Could not read salary data from levels.fyi (no embedded page data)" in capsys.readouterr().err
+    assert (
+        "Could not read salary data from levels.fyi (no embedded page data)"
+        in capsys.readouterr().err
+    )

@@ -14,9 +14,11 @@ poetry run meeting-cost SDM-L7 SDE-L5            # run
 poetry run pytest                                # run offline tests
 poetry run pytest -m live                        # run tests against live levels.fyi data
 poetry run pytest tests/test_attendees.py::test_parses_role_and_level  # single test
+poetry run ruff format .                         # format
+poetry run ruff check --fix .                    # lint
 ```
 
-Running needs network access to levels.fyi. No linter or formatter is configured. `pyproject.toml` puts `src` on the pytest path and deselects tests marked `live` by default.
+Running needs network access to levels.fyi. Format and lint after every change; ruff is configured in `pyproject.toml`. `pyproject.toml` puts `src` on the pytest path and deselects tests marked `live` by default.
 
 ## How it works
 
