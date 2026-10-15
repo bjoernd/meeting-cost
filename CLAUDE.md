@@ -23,12 +23,12 @@ Because the script has a hyphen and no `.py` extension, tests import it with `im
 
 1. `__main__` fetches one levels.fyi page per role (`SDM_URL`, `SDE_URL`, `TPM_URL`, all with `country=254` = USA) on every run; there is no caching.
 2. `extract_salaries` loads the page, waits for the salary table, clicks the "expand" button so all levels are listed, waits for the expanded rows, then parses the first HTML table with `pandas.read_html`.
-3. `create_salary_dict` maps each level to an hourly rate: the "Total" column (e.g. `€250K`) is parsed to an integer and divided by 238 work days × 8 hours. Rows with `--` are skipped.
+3. `create_salary_dict` maps each level to an hourly rate: the "Total" column (e.g. `€250K` or `€1.06M`) is parsed to an amount and divided by 238 work days × 8 hours. Rows with `--` are skipped.
 4. Attendee hourly rates are summed; unknown attendees are reported and skipped. Costs are printed for fixed lengths of 30/45/60/90/120 minutes.
 
 ## Fragility: levels.fyi selectors
 
-The scraper depends on generated CSS class names on levels.fyi (MUI classes like `css-kge0eu`, `job-family_tableContainer__MOxEY`). When levels.fyi changes its layout, the tool fails with a Selenium timeout. The fix is to inspect the live page in a browser and update the three CSS selectors in `extract_salaries` (example: commit `ed41f47`).
+The scraper depends on generated CSS class names on levels.fyi (MUI classes like `mui-kge0eu` and CSS module classes like `job-family-module-scss-module__6qB4Ca__tableContainer`, whose prefix and hash both change over time). When levels.fyi changes its layout, the tool fails with a Selenium timeout. The fix is to inspect the live page in a browser and update the three CSS selectors in `extract_salaries` (example: commit `0a21317`). Dumping `driver.page_source` from a headless run and grepping it for the old hash suffixes (e.g. `kge0eu`) is a quick way to find the new names.
 
 ## Known gaps (from README / TODO header)
 
